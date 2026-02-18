@@ -1,0 +1,36 @@
+name: Auto Update Configs
+
+on:
+  schedule:
+    - cron: '0 */4 * * *' # هر 4 ساعت آپدیت میشه
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Libraries
+      run: |
+        pip install requests pycountry
+
+    - name: Run Script
+      run: python main.py
+
+    - name: Save Changes
+      run: |
+        git config --global user.name 'DarkRoute-Bot'
+        git config --global user.email 'bot@darkroute.vpn'
+        git add sub.txt sub_base64.txt
+        git commit -m "Updated Configs with Flags" || exit 0
+        git push
