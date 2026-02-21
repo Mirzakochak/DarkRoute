@@ -22,7 +22,7 @@ jobs:
 
     - name: Install Libraries
       run: |
-        pip install requests pycountry
+        pip install requests
 
     - name: Run Script
       run: python main.py
