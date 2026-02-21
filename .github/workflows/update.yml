@@ -31,6 +31,6 @@ jobs:
       run: |
         git config --global user.name 'DarkRoute-Bot'
         git config --global user.email 'bot@darkroute.vpn'
-        git add sub.txt sub_base64.txt
-        git commit -m "Updated Configs with Flags" || exit 0
+        git add sub.txt sub_base64.txt ip_cache.json
+        git commit -m "Updated Configs & IP Cache" || exit 0
         git push
