@@ -4,42 +4,48 @@ import json
 import re
 import time
 import random
+import os
 
 # --- تنظیمات شما ---
 CHANNEL_ID = "@DarkRouteVPN"  
 AD_TEXT = "🔥 عضو کانال بشید 🔥"  
+MAX_CONFIGS = 3000  # محدودیت تعداد کانفیگ‌ها
+CACHE_FILE = "ip_cache.json" # فایل ذخیره دائمی کشورها
 
-# لیست کامل تمام سورس‌های پیدا شده + سورس‌های خودت
+# لیست کامل سورس‌ها
 SOURCES = [
-    # مخزن MatinGhanbari
     "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/v2ray/all_sub.txt",
     "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/v2ray/super-sub.txt",
     "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/filtered/subs/vless.txt",
     "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/filtered/subs/vmess.txt",
-    
-    # مخزن barry-far
     "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/Sub1.txt",
     "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/Splitted-By-Protocol/vless.txt",
     "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/Splitted-By-Protocol/vmess.txt",
-    
-    # مخزن Epodonios
     "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/All_Configs_Sub.txt",
     "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Splitted-By-Protocol/vless.txt",
-    
-    # مخزن ebrasha
     "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/all_extracted_configs.txt",
     "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/vless_configs.txt",
-    
-    # مخزن lagzian
     "https://raw.githubusercontent.com/lagzian/SS-Collector/main/vless_base64.txt",
-    
-    # سورس‌های قبلی خودت
     "https://raw.githubusercontent.com/Mohammadgb0078/IRV2ray/main/conf.txt",
     "https://raw.githubusercontent.com/yebekhe/TVC/main/subscriptions/xray/normal/mix",
     "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/EternityAir"
 ]
 
-ip_cache = {}
+# لود کردن کش از فایل
+if os.path.exists(CACHE_FILE):
+    try:
+        with open(CACHE_FILE, 'r', encoding='utf-8') as f:
+            ip_cache = json.load(f)
+        print(f"[*] Loaded {len(ip_cache)} IPs from cache file.")
+    except:
+        ip_cache = {}
+else:
+    ip_cache = {}
+
+def save_cache():
+    with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(ip_cache, f)
+    print(f"[*] Saved {len(ip_cache)} IPs to cache file.")
 
 def get_flag_emoji(country_code):
     if not country_code or country_code == 'XX': return "🚩"
@@ -127,7 +133,7 @@ def main():
     
     for source in SOURCES:
         try:
-            print(f"[+] Downloading from: {source}")
+            print(f"[+] Downloading: {source}")
             resp = requests.get(source, timeout=15)
             content = resp.text.strip()
             
@@ -139,18 +145,21 @@ def main():
             lines = content.splitlines()
             raw_configs.extend(lines)
         except Exception as e:
-            print(f"[-] Error fetching source {source}: {e}")
+            print(f"[-] Error: {e}")
 
     unique_configs = list(set(raw_configs))
     random.shuffle(unique_configs)
 
     print(f"\n[*] Total unique configs found: {len(unique_configs)}")
-    print("[*] Processing configs (This may take a while depending on new IPs)...\n")
+    print(f"[*] Processing top {MAX_CONFIGS} configs...\n")
     
     count = 1
     processed_configs = []
 
     for conf in unique_configs:
+        if count > MAX_CONFIGS: 
+            break
+            
         conf = conf.strip()
         if not conf or len(conf) > 2000: continue
 
@@ -163,13 +172,13 @@ def main():
             
         if new_conf:
             processed_configs.append(new_conf)
-            if count % 500 == 0:
+            if count % 100 == 0:
                 print(f"[~] Processed {count} configs so far...")
             count += 1
 
     final_configs.extend(processed_configs)
 
-    print("\n[*] Saving to files...")
+    print("\n[*] Saving configs...")
     with open("sub.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(final_configs))
         
@@ -177,7 +186,9 @@ def main():
     with open("sub_base64.txt", "w", encoding="utf-8") as f:
         f.write(final_b64)
         
-    print(f"[+] Done! Successfully processed {count-1} configs and saved to sub.txt and sub_base64.txt")
+    # ذخیره فایل کش
+    save_cache()
+    print(f"[+] Done! Processed {count-1} configs.")
 
 if __name__ == "__main__":
     main()
